@@ -10,4 +10,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = []
+dev = [
+    "pyinstaller>=6.11.1",
+]
+
