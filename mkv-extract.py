@@ -17,12 +17,11 @@ def convert_subtitles(video_file, temp_file, output_file, stream_index):
             os.remove(output_file)
 
         # Извлекаем субтитры из указанного потока в формат .ass
-        ffmpeg.input(video_file).output(temp_file, format='ass', map=f'0:{stream_index}').run()
+        ffmpeg.input(video_file).output(temp_file, format='ass', map=f'0:{stream_index}').run(quiet=True, overwrite_output=True)
         # Конвертируем .ass в .srt
-        ffmpeg.input(temp_file).output(output_file, format='srt').run()
-        print(f'Subtitles extracted to {output_file}')
-    except Exception as e:
-        print(f'Error: {e}')
+        ffmpeg.input(temp_file).output(output_file, format='srt').run(quiet=True, overwrite_output=True)
+    except ffmpeg.Error as e:
+        print(f'Error: {e.stderr.decode()}')
 
 def extract_subtitles(video_file, output_dir, languages):
     if output_dir is None:
@@ -45,8 +44,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract subtitles from video files.")
     parser.add_argument("video_files", type=str, nargs='+', help="List of video file paths.")
     parser.add_argument("--output_dir", type=str, default=None, help="Directory to save the extracted subtitles. Default: Same directory as video file.")
-    parser.add_argument("--languages", type=str, nargs='+', default=["rus", "eng", "chi"],
-                        help="List of language codes (ISO 639-2). Default: ['rus', 'eng', 'chi']")
+    parser.add_argument("--languages", type=str, nargs='+', default=["rus", "eng", "chi", "zho"],
+                        help="List of language codes (ISO 639-2). Default: ['rus', 'eng', 'chi', 'zho']")
 
     args = parser.parse_args()
 
