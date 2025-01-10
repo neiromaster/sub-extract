@@ -3,6 +3,8 @@ import argparse
 import os
 import subprocess
 import json
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 def get_subtitle_stream_indices(video_file, language):
     cmd = f"ffprobe -v error -select_streams s -show_entries stream=index:stream_tags=language -of json {video_file}"
@@ -40,14 +42,41 @@ def extract_subtitles(video_file, output_dir, languages):
         else:
             print(f"No subtitles found for language '{language}' in file '{video_file}'")
 
+class WatchdogHandler(FileSystemEventHandler):
+    def __init__(self, output_dir, languages):
+        self.output_dir = output_dir
+        self.languages = languages
+
+    def on_created(self, event):
+        if not event.is_directory and event.src_path.endswith(('.mp4', '.mkv', '.avi')):
+            print(f"New video file detected: {event.src_path}")
+            extract_subtitles(event.src_path, self.output_dir, self.languages)
+
+def start_watching(directory, output_dir, languages):
+    event_handler = WatchdogHandler(output_dir, languages)
+    observer = Observer()
+    observer.schedule(event_handler, directory, recursive=False)
+    observer.start()
+    try:
+        print(f"Watching directory: {directory}")
+        while True:
+            pass  # Infinite loop to keep the script running
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract subtitles from video files.")
-    parser.add_argument("video_files", type=str, nargs='+', help="List of video file paths.")
+    parser.add_argument("video_files", type=str, nargs='*', help="List of video file paths.")
+    parser.add_argument("--watch_dir", type=str, help="Directory to watch for new video files.")
     parser.add_argument("--output_dir", type=str, default=None, help="Directory to save the extracted subtitles. Default: Same directory as video file.")
-    parser.add_argument("--languages", type=str, nargs='+', default=["rus", "eng", "chi", "zho"],
-                        help="List of language codes (ISO 639-2). Default: ['rus', 'eng', 'chi', 'zho']")
+    parser.add_argument("--languages", type=str, nargs='+', default=["rus", "eng", "zho", "chi"],
+                        help="List of language codes (ISO 639-2). Default: ['rus', 'eng', 'zho', 'chi']")
 
     args = parser.parse_args()
 
-    for video_file in args.video_files:
-        extract_subtitles(video_file, args.output_dir, args.languages)
+    if args.watch_dir:
+        start_watching(args.watch_dir, args.output_dir, args.languages)
+    else:
+        for video_file in args.video_files:
+            extract_subtitles(video_file, args.output_dir, args.languages)
