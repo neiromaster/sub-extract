@@ -16,13 +16,13 @@ def get_subtitle_stream_indices(video_file, language):
 
 def convert_subtitles(video_file, temp_file, output_file, stream_index):
     try:
-        # Удаляем существующий выходной файл, если он есть
+        # Delete the existing output file, if any
         if os.path.exists(output_file):
             os.remove(output_file)
 
-        # Извлекаем субтитры из указанного потока в формат .ass
+        # Extract subtitles from the specified stream into .ass format
         ffmpeg.input(video_file).output(temp_file, format='ass', map=f'0:{stream_index}').run(quiet=True, overwrite_output=True)
-        # Конвертируем .ass в .srt
+        # Convert .ass to .srt
         ffmpeg.input(temp_file).output(output_file, format='srt').run(quiet=True, overwrite_output=True)
     except ffmpeg.Error as e:
         print(f'Error: {e.stderr.decode()}')
@@ -40,7 +40,7 @@ def extract_subtitles(video_file, output_dir, languages):
                 output_file = os.path.join(output_dir, f"{base_name}_{language}{suffix}.srt")
                 convert_subtitles(video_file, temp_file, output_file, stream_index)
                 if os.path.exists(temp_file):
-                    os.remove(temp_file)  # Удаление временного файла
+                    os.remove(temp_file)  # Deleting a temporary file
         else:
             print(f"No subtitles found for language '{language}' in file '{video_file}'")
 
@@ -52,7 +52,7 @@ class WatchdogHandler(FileSystemEventHandler):
     def on_created(self, event):
         if not event.is_directory and event.src_path.endswith(('.mp4', '.mkv', '.avi')):
             print(f"New video file detected: {event.src_path}")
-            # Ожидаем, пока файл не будет полностью скопирован
+            # Wait until the file is completely copied
             self.wait_for_complete_copy(event.src_path)
             extract_subtitles(event.src_path, self.output_dir, self.languages)
 
