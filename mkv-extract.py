@@ -1,3 +1,5 @@
+import time
+
 import ffmpeg
 import argparse
 import os
@@ -60,7 +62,7 @@ def start_watching(directory, output_dir, languages):
     try:
         print(f"Watching directory: {directory}")
         while True:
-            pass  # Infinite loop to keep the script running
+            time.sleep(1)  # Infinite loop to keep the script running
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
