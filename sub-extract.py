@@ -64,12 +64,12 @@ class WatchdogHandler(FileSystemEventHandler):
             extract_subtitles(event.src_path, self.output_dir, self.languages)
 
     def wait_for_complete_copy(self, file_path):
-        previous_size = -1
+        previous_modification_time = -1
         while True:
-            current_size = os.path.getsize(file_path)
-            if current_size == previous_size:
+            current_modification_time = os.path.getmtime(file_path)
+            if current_modification_time == previous_modification_time:
                 break
-            previous_size = current_size
+            previous_modification_time = current_modification_time
             time.sleep(1)
 
 def start_watching(directory, output_dir, languages):
