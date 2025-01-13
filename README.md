@@ -21,7 +21,7 @@ python sub-extract.py <video_file_1> <video_file_2> ... --output_dir <output_dir
 Parameters:
 - `video_file_1`, `video_file_2`, ... - paths to the video files.
 - `--output_dir` (optional) - directory to save the extracted subtitles. By default, subtitles are saved in the same directory as the video file.
-- `--languages` (optional) - list of language codes in ISO 639-2 format. Default: `['rus', 'eng', 'zho']`.
+- `--languages` (optional) - list of language codes in ISO 639-2 format. Default: `['rus', 'eng', 'zho', 'chi']`.
 
 ### Running the script in watch mode
 
@@ -56,7 +56,6 @@ This will create an executable file `sub-extract.exe` in the `dist` directory.
 If you are using `uv` for project management, the script can be built with the following commands:
 
 ```bash
-uv venv
 uv run pyinstaller --onefile sub-extract.py
 ```
 
@@ -65,13 +64,13 @@ uv run pyinstaller --onefile sub-extract.py
 ### Extracting subtitles from video files
 
 ```bash
-python sub-extract.py example1.mp4 example2.mkv --output_dir ./subtitles --languages eng rus
+python sub-extract.py example1.mp4 example2.mkv --output_dir ./subtitles --languages eng rus chi
 ```
 
 ### Watch mode for a directory
 
 ```bash
-python sub-extract.py --watch_dir ./videos --output_dir ./subtitles --languages eng rus
+python sub-extract.py --watch_dir ./videos --output_dir ./subtitles --languages eng rus chi
 ```
 
 This `README.md` file provides the basic instructions for using the script and converting it to an executable file. If you have any further requests or questions, feel free to let me know!
