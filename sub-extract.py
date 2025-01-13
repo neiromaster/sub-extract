@@ -33,16 +33,16 @@ def extract_subtitles(video_file, output_dir, languages):
     base_name = os.path.splitext(os.path.basename(video_file))[0]
     for language in languages:
         stream_indices = get_subtitle_stream_indices(video_file, language)
-        if stream_indices:
-            for i, stream_index in enumerate(stream_indices):
-                suffix = f"_{i}" if len(stream_indices) > 1 else ""
-                temp_file = os.path.join(output_dir, f"{base_name}_{language}{suffix}.ass")
-                output_file = os.path.join(output_dir, f"{base_name}_{language}{suffix}.srt")
-                convert_subtitles(video_file, temp_file, output_file, stream_index)
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)  # Deleting a temporary file
-        else:
+        if not stream_indices:
             print(f"No subtitles found for language '{language}' in file '{video_file}'")
+            continue
+        for i, stream_index in enumerate(stream_indices):
+            suffix = f"_{i}" if len(stream_indices) > 1 else ""
+            temp_file = os.path.join(output_dir, f"{base_name}_{language}{suffix}.ass")
+            output_file = os.path.join(output_dir, f"{base_name}_{language}{suffix}.srt")
+            convert_subtitles(video_file, temp_file, output_file, stream_index)
+            if os.path.exists(temp_file):
+                os.remove(temp_file)  # Deleting a temporary file
 
 class WatchdogHandler(FileSystemEventHandler):
     def __init__(self, output_dir, languages):
