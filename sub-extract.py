@@ -11,8 +11,13 @@ from watchdog.events import FileSystemEventHandler
 def get_subtitle_stream_indices(video_file, language):
     cmd = f"ffprobe -v error -select_streams s -show_entries stream=index:stream_tags=language -of json {video_file}"
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    streams = json.loads(result.stdout)["streams"]
-    return [stream["index"] for stream in streams if stream.get("tags", {}).get("language", "") == language]
+    try:
+        if result.stdout:
+            streams = json.loads(result.stdout)["streams"]
+            return [stream["index"] for stream in streams if stream.get("tags", {}).get("language", "") == language]
+    except json.JSONDecodeError:
+        pass
+    return []
 
 def convert_subtitles(video_file, temp_file, output_file, stream_index):
     try:
