@@ -13,8 +13,10 @@ def get_subtitle_stream_indices(video_file, language):
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     try:
         if result.stdout:
-            streams = json.loads(result.stdout)["streams"]
-            return [stream["index"] for stream in streams if stream.get("tags", {}).get("language", "") == language]
+            data = json.loads(result.stdout)
+            if "streams" in data:
+                streams = data["streams"]
+                return [stream["index"] for stream in streams if stream.get("tags", {}).get("language", "") == language]
     except json.JSONDecodeError:
         pass
     return []
