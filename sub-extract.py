@@ -75,12 +75,20 @@ class WatchdogHandler(FileSystemEventHandler):
 def start_watching(directory, output_dir, languages):
     event_handler = WatchdogHandler(output_dir, languages)
     observer = Observer()
+    event_handler = WatchdogHandler(output_dir, languages)
+    for filename in os.listdir(directory):
+        if filename.endswith(('.mp4', '.mkv', '.avi')):
+            file_path = os.path.join(directory, filename)
+            print(f"Processing existing file: {file_path}")
+            event_handler.wait_for_complete_copy(file_path)
+            extract_subtitles(file_path, output_dir, languages)
+    observer = Observer()
     observer.schedule(event_handler, directory, recursive=False)
     observer.start()
     try:
         print(f"Watching directory: {directory}")
         while True:
-            time.sleep(1)  # Infinite loop to keep the script running
+            time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
