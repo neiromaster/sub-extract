@@ -64,13 +64,13 @@ class WatchdogHandler(FileSystemEventHandler):
             extract_subtitles(event.src_path, self.output_dir, self.languages)
 
     def wait_for_complete_copy(self, file_path):
-        previous_modification_time = -1
         while True:
-            current_modification_time = os.path.getmtime(file_path)
-            if current_modification_time == previous_modification_time:
+            try:
+                os.rename(file_path, file_path)
+                print(f"File {file_path} is completely copied.")
                 break
-            previous_modification_time = current_modification_time
-            time.sleep(1)
+            except OSError:
+                time.sleep(1)
 
 def start_watching(directory, output_dir, languages):
     event_handler = WatchdogHandler(output_dir, languages)
