@@ -99,20 +99,36 @@ def start_watching(directory, output_dir, languages):
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        observer.stop()
+        try:
+            observer.stop()
+        except KeyboardInterrupt:
+            pass
         print("\nExiting application. Summary:")
         print(f"  Processed video files: {event_handler.processed_files_count}")
         print(f"  Extracted subtitle files: {event_handler.extracted_subtitles_count}")
-    observer.join()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract subtitles from video files.")
-    parser.add_argument("--watch", type=str, required=True, help="Directory to watch for new video files (required).")
+    parser.add_argument("--watch", type=str, help="Directory to watch for new video files.")
     parser.add_argument("--output", type=str, default=None,
                         help="Directory to save the extracted subtitles. Default: Same directory as video file.")
     parser.add_argument("--languages", type=str, nargs='+', default=["rus", "eng", "zho", "chi"],
                         help="List of language codes (ISO 639-2). Default: ['rus', 'eng', 'zho', 'chi']")
+    parser.add_argument("files", nargs='*', help="List of video files to process.")
 
     args = parser.parse_args()
 
-    start_watching(args.watch, args.output, args.languages)
+    if args.files:
+        processed_files_count = 0
+        extracted_subtitles_count = 0
+        for file in args.files:
+            print(f"Processing file: {file}")
+            processed_files_count += 1
+            extracted_subtitles_count += extract_subtitles(file, args.output, args.languages)
+        print("\nExiting application. Summary:")
+        print(f"  Processed video files: {processed_files_count}")
+        print(f"  Extracted subtitle files: {extracted_subtitles_count}")
+    elif args.watch:
+        start_watching(args.watch, args.output, args.languages)
+    else:
+        parser.print_help()
