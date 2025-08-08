@@ -31,13 +31,16 @@ def convert_subtitles(video_file, temp_file, output_file, stream_index):
         ffmpeg.input(video_file).output(temp_file, format='ass', map=f'0:{stream_index}').run(quiet=True, overwrite_output=True)
         # Convert .ass to .srt
         ffmpeg.input(temp_file).output(output_file, format='srt').run(quiet=True, overwrite_output=True)
+        return True
     except ffmpeg.Error as e:
         print(f'Error: {e.stderr.decode()}')
+        return False
 
 def extract_subtitles(video_file, output_dir, languages):
     if output_dir is None:
         output_dir = os.path.dirname(video_file)
     base_name = os.path.splitext(os.path.basename(video_file))[0]
+    extracted_count = 0
     for language in languages:
         stream_indices = get_subtitle_stream_indices(video_file, language)
         if not stream_indices:
@@ -47,21 +50,27 @@ def extract_subtitles(video_file, output_dir, languages):
             suffix = f"_{i}" if len(stream_indices) > 1 else ""
             temp_file = os.path.join(output_dir, f"{base_name}_{language}{suffix}.ass")
             output_file = os.path.join(output_dir, f"{base_name}_{language}{suffix}.srt")
-            convert_subtitles(video_file, temp_file, output_file, stream_index)
+            if convert_subtitles(video_file, temp_file, output_file, stream_index):
+                extracted_count += 1
             if os.path.exists(temp_file):
                 os.remove(temp_file)  # Deleting a temporary file
+    return extracted_count
 
 class WatchdogHandler(FileSystemEventHandler):
     def __init__(self, output_dir, languages):
         self.output_dir = output_dir
         self.languages = languages
+        self.processed_files_count = 0
+        self.extracted_subtitles_count = 0
 
     def on_created(self, event):
         if not event.is_directory and event.src_path.endswith(('.mp4', '.mkv', '.avi')):
             print(f"New video file detected: {event.src_path}")
             # Wait until the file is completely copied
             self.wait_for_complete_copy(event.src_path)
-            extract_subtitles(event.src_path, self.output_dir, self.languages)
+            self.processed_files_count += 1
+            subtitles_extracted = extract_subtitles(event.src_path, self.output_dir, self.languages)
+            self.extracted_subtitles_count += subtitles_extracted
 
     def wait_for_complete_copy(self, file_path):
         while True:
@@ -74,14 +83,14 @@ class WatchdogHandler(FileSystemEventHandler):
 
 def start_watching(directory, output_dir, languages):
     event_handler = WatchdogHandler(output_dir, languages)
-    observer = Observer()
-    event_handler = WatchdogHandler(output_dir, languages)
     for filename in os.listdir(directory):
         if filename.endswith(('.mp4', '.mkv', '.avi')):
             file_path = os.path.join(directory, filename)
             print(f"Processing existing file: {file_path}")
             event_handler.wait_for_complete_copy(file_path)
-            extract_subtitles(file_path, output_dir, languages)
+            event_handler.processed_files_count += 1
+            subtitles_extracted = extract_subtitles(file_path, output_dir, languages)
+            event_handler.extracted_subtitles_count += subtitles_extracted
     observer = Observer()
     observer.schedule(event_handler, directory, recursive=False)
     observer.start()
@@ -91,20 +100,19 @@ def start_watching(directory, output_dir, languages):
             time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
+        print("\nExiting application. Summary:")
+        print(f"  Processed video files: {event_handler.processed_files_count}")
+        print(f"  Extracted subtitle files: {event_handler.extracted_subtitles_count}")
     observer.join()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract subtitles from video files.")
-    parser.add_argument("video_files", type=str, nargs='*', help="List of video file paths.")
-    parser.add_argument("--watch_dir", type=str, help="Directory to watch for new video files.")
-    parser.add_argument("--output_dir", type=str, default=None, help="Directory to save the extracted subtitles. Default: Same directory as video file.")
+    parser.add_argument("--watch", type=str, required=True, help="Directory to watch for new video files (required).")
+    parser.add_argument("--output", type=str, default=None,
+                        help="Directory to save the extracted subtitles. Default: Same directory as video file.")
     parser.add_argument("--languages", type=str, nargs='+', default=["rus", "eng", "zho", "chi"],
                         help="List of language codes (ISO 639-2). Default: ['rus', 'eng', 'zho', 'chi']")
 
     args = parser.parse_args()
 
-    if args.watch_dir:
-        start_watching(args.watch_dir, args.output_dir, args.languages)
-    else:
-        for video_file in args.video_files:
-            extract_subtitles(video_file, args.output_dir, args.languages)
+    start_watching(args.watch, args.output, args.languages)
