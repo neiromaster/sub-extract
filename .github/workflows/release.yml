@@ -1,0 +1,75 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-release:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x64
+          - os: windows-latest
+            arch: x64
+          - os: macos-latest
+            arch: x64
+          - os: macos-latest
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install FFmpeg (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install FFmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+
+      - name: Install FFmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ffmpeg-python watchdog pyinstaller
+
+      - name: Run PyInstaller and Rename
+        shell: bash
+        run: |
+          pyinstaller --name sub-extract --onefile --console sub-extract.py
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            mv dist/sub-extract.exe "dist/sub-extract-${{ runner.os }}-${{ matrix.arch }}.exe"
+          else
+            mv dist/sub-extract "dist/sub-extract-${{ runner.os }}-${{ matrix.arch }}"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sub-extract-${{ runner.os }}-${{ matrix.arch }}
+          path: dist/sub-extract-${{ runner.os }}-${{ matrix.arch }}*
+
+  release:
+    needs: build-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*/*
