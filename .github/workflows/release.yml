@@ -1,0 +1,38 @@
+name: Build Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ffmpeg-python watchdog pyinstaller
+
+      - name: Run PyInstaller
+        run: |
+          pyinstaller --name sub-extract --onefile --console sub-extract.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sub-extract
+          path: dist/sub-extract
