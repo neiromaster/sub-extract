@@ -106,7 +106,6 @@ def start_watching(directory, output_dir, languages):
         print("\nExiting application. Summary:")
         print(f"  Processed video files: {event_handler.processed_files_count}")
         print(f"  Extracted subtitle files: {event_handler.extracted_subtitles_count}")
-    observer.join()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract subtitles from video files.")
