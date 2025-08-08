@@ -15,24 +15,24 @@ pip install ffmpeg-python watchdog
 ### Running the script to extract subtitles from video files
 
 ```bash
-python sub-extract.py <video_file_1> <video_file_2> ... --output_dir <output_directory> --languages <lang_1> <lang_2> ...
+python sub-extract.py <video_file_1> <video_file_2> ... --output <output_directory> --languages <lang_1> <lang_2> ...
 ```
 
 Parameters:
 - `video_file_1`, `video_file_2`, ... - paths to the video files.
-- `--output_dir` (optional) - directory to save the extracted subtitles. By default, subtitles are saved in the same directory as the video file.
+- `--output` (optional) - directory to save the extracted subtitles. By default, subtitles are saved in the same directory as the video file.
 - `--languages` (optional) - list of language codes in ISO 639-2 format. Default: `['rus', 'eng', 'zho', 'chi']`.
 
 ### Running the script in watch mode
 
 ```bash
-python sub-extract.py --watch_dir <directory_to_watch> --output_dir <output_directory> --languages <lang_1> <lang_2> ...
+python sub-extract.py --watch <directory_to_watch> --output <output_directory> --languages <lang_1> <lang_2> ...
 ```
 
 Parameters:
-- `--watch_dir` - directory to watch for new video files.
-- `--output_dir` (optional) - directory to save the extracted subtitles. By default, subtitles are saved in the same directory as the video file.
-- `--languages` (optional) - list of language codes in ISO 639-2 format. Default: `['rus', 'eng', 'zho']`.
+- `--watch` - directory to watch for new video files.
+- `--output` (optional) - directory to save the extracted subtitles. By default, subtitles are saved in the same directory as the video file.
+- `--languages` (optional) - list of language codes in ISO 639-2 format. Default: `['rus', 'eng', 'zho', 'chi']`.
 
 ### Converting the script to an executable with PyInstaller
 
@@ -64,13 +64,13 @@ uv run pyinstaller --onefile sub-extract.py
 ### Extracting subtitles from video files
 
 ```bash
-python sub-extract.py example1.mp4 example2.mkv --output_dir ./subtitles --languages eng rus chi
+python sub-extract.py example1.mp4 example2.mkv --output ./subtitles --languages eng rus chi
 ```
 
 ### Watch mode for a directory
 
 ```bash
-python sub-extract.py --watch_dir ./videos --output_dir ./subtitles --languages eng rus chi
+python sub-extract.py --watch ./videos --output ./subtitles --languages eng rus chi
 ```
 
 This `README.md` file provides the basic instructions for using the script and converting it to an executable file. If you have any further requests or questions, feel free to let me know!
