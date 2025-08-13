@@ -64,13 +64,13 @@ class WatchdogHandler(FileSystemEventHandler):
             extract_subtitles(event.src_path, self.output_dir, self.languages)
 
     def wait_for_complete_copy(self, file_path):
-        previous_modification_time = -1
         while True:
-            current_modification_time = os.path.getmtime(file_path)
-            if current_modification_time == previous_modification_time:
+            try:
+                os.rename(file_path, file_path)
+                print(f"File {file_path} is completely copied.")
                 break
-            previous_modification_time = current_modification_time
-            time.sleep(1)
+            except OSError:
+                time.sleep(1)
 
 def start_watching(directory, output_dir, languages):
     event_handler = WatchdogHandler(output_dir, languages)
@@ -95,16 +95,17 @@ def start_watching(directory, output_dir, languages):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract subtitles from video files.")
-    parser.add_argument("video_files", type=str, nargs='*', help="List of video file paths.")
-    parser.add_argument("--watch_dir", type=str, help="Directory to watch for new video files.")
-    parser.add_argument("--output_dir", type=str, default=None, help="Directory to save the extracted subtitles. Default: Same directory as video file.")
+    parser.add_argument("--watch", type=str, help="Directory to watch for new video files.")
+    parser.add_argument("--output", type=str, default=None,
+                        help="Directory to save the extracted subtitles. Default: Same directory as video file.")
     parser.add_argument("--languages", type=str, nargs='+', default=["rus", "eng", "zho", "chi"],
                         help="List of language codes (ISO 639-2). Default: ['rus', 'eng', 'zho', 'chi']")
+    parser.add_argument("files", nargs='*', help="List of video files to process.")
 
     args = parser.parse_args()
 
-    if args.watch_dir:
-        start_watching(args.watch_dir, args.output_dir, args.languages)
+    if args.watch:
+        start_watching(args.watch, args.output, args.languages)
     else:
-        for video_file in args.video_files:
-            extract_subtitles(video_file, args.output_dir, args.languages)
+        for video_file in args.files:
+            extract_subtitles(video_file, args.output, args.languages)
