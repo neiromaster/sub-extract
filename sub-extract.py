@@ -103,9 +103,12 @@ def start_watching(directory, output_dir, languages):
             observer.stop()
         except KeyboardInterrupt:
             pass
-        print("\nExiting application. Summary:")
-        print(f"  Processed video files: {event_handler.processed_files_count}")
-        print(f"  Extracted subtitle files: {event_handler.extracted_subtitles_count}")
+        print_summary(event_handler.processed_files_count, event_handler.extracted_subtitles_count)
+
+def print_summary(processed_files_count, extracted_subtitles_count):
+    print("\nExiting application. Summary:")
+    print(f"  Processed video files: {processed_files_count}")
+    print(f"  Extracted subtitle files: {extracted_subtitles_count}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract subtitles from video files.")
@@ -125,9 +128,7 @@ if __name__ == "__main__":
             print(f"Processing file: {file}")
             processed_files_count += 1
             extracted_subtitles_count += extract_subtitles(file, args.output, args.languages)
-        print("\nExiting application. Summary:")
-        print(f"  Processed video files: {processed_files_count}")
-        print(f"  Extracted subtitle files: {extracted_subtitles_count}")
+        print_summary(processed_files_count, extracted_subtitles_count)
     elif args.watch:
         start_watching(args.watch, args.output, args.languages)
     else:
