@@ -92,15 +92,36 @@ class WatchdogHandler(FileSystemEventHandler):
             subtitles_extracted = extract_subtitles(event.src_path, self.output_dir, self.languages)
             self.extracted_subtitles_count += subtitles_extracted
 
-    def wait_for_complete_copy(self, file_path):
+    def wait_for_complete_copy(self, file_path, check_interval=5, stability_checks=3, timeout=300):
+        logger.debug(f"Waiting for file {file_path} to stabilize (size check).")
+        last_size = -1
+        stable_count = 0
+        start_time = time.time()
+
         while True:
-            try:
-                os.rename(file_path, file_path)
-                logger.info(f"File {file_path} is completely copied.")
+            if time.time() - start_time > timeout:
+                logger.warning(f"Timeout reached while waiting for {file_path} to stabilize.")
                 break
-            except OSError:
-                logger.debug(f"File {file_path} is still being copied, waiting...")
-                time.sleep(1)
+
+            try:
+                current_size = os.path.getsize(file_path)
+            except FileNotFoundError:
+                logger.debug(f"File {file_path} not found, waiting for it to appear.")
+                time.sleep(check_interval)
+                continue
+
+            if current_size == last_size:
+                stable_count += 1
+                logger.debug(f"File {file_path} size stable ({current_size} bytes). Stable count: {stable_count}/{stability_checks}")
+                if stable_count >= stability_checks:
+                    logger.info(f"File {file_path} is completely copied and stable.")
+                    break
+            else:
+                stable_count = 0
+                logger.debug(f"File {file_path} size changed from {last_size} to {current_size} bytes. Resetting stable count.")
+            
+            last_size = current_size
+            time.sleep(check_interval)
 
 def start_watching(directory, output_dir, languages):
     event_handler = WatchdogHandler(output_dir, languages)
